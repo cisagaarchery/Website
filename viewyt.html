@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram YouTube Player</title>
+    <!-- SDK Resmi Telegram Web Apps -->
+    <script src="https://telegram.org"></script>
+    <style>
+        /* Desain tema gelap elegan khas Telegram Premium */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #17212b; /* Warna latar gelap Telegram */
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            background-color: #242f3d;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #64b5f6;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 12px;
+            color: #708499;
+        }
+        /* Pembungkus Video agar Responsif di Layar HP */
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            padding-bottom: 56.25%; /* Rasio 16:9 */
+            height: 0;
+            background-color: #000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        /* Desain Daftar Putar (Playlist) */
+        .playlist-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .playlist-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #708499;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+        .video-item {
+            display: flex;
+            align-items: center;
+            background-color: #242f3d;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            border: 1px solid #2f3e4e;
+        }
+        .video-item:hover {
+            background-color: #2b394a;
+        }
+        .video-item:active {
+            transform: scale(0.98);
+        }
+        /* Gambar Mini (Thumbnail) Video */
+        .thumbnail {
+            width: 80px;
+            height: 45px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 4px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .video-info {
+            text-align: left;
+        }
+        .video-name {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bagian Atas / Profil Singkat -->
+    <div class="header">
+        <h1 id="app-title">YouTube Player Mini</h1>
+        <p id="user-welcome">Memuat profil Telegram...</p>
+    </div>
+
+    <!-- Layar Utama Pemutar Video -->
+    <div class="video-container">
+        <!-- Kontainer Player Youtube Otomatis Diisi oleh API -->
+        <div id="player"></div>
+    </div>
+
+    <!-- Area Daftar Putar Video -->
+    <div class="playlist-container">
+        <div class="playlist-title">Daftar Putar Video</div>
+        <div id="playlist-list"></div>
+    </div>
+
+<script>
+    // ========================================================
+    // 1. DAFTAR VIDEO YOUTUBE
+    // ========================================================
+    const daftarVideo = [
+        { id: "grSaPABTtEs", judul: "Perkenalan Anggota (ACC) Archery Cisaga Club" },
+        { id: "1s6QfGlLnrs", judul: "Video Panahan Tradisional Bagian 2" },
+        { id: "dQw4w9WgXcQ", judul: "Video Rekomendasi Utama 1" },
+        { id: "9bZkp7q19f0", judul: "Tutorial Belajar Coding Menyenangkan" },
+        { id: "kJQP7kiw5Fk", judul: "Musik Santai Pengantar Kerja & Belajar" }
+    ];
+
+    // Variabel untuk melacak indeks video yang sedang diputar
+    let indeksVideoSekarang = 0;
+
+    // ========================================================
+    // 2. INISIALISASI TELEGRAM WEB APP SDK
+    // ========================================================
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand(); 
+
+    const infoUser = tg.initDataUnsafe?.user;
+    if (infoUser) {
+        document.getElementById('user-welcome').innerText = `Halo, ${infoUser.first_name}! Selamat menonton.`;
+    } else {
+        document.getElementById('user-welcome').innerText = `Selamat menonton video pilihan!`;
+    }
+
+    // ========================================================
+    // 3. INTEGRASI YOUTUBE EMBED PLAYER API + AUTOPLAY NEXT
+    // ========================================================
+    var tag = document.createElement('script');
+    tag.src = "https://youtube.com";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    var player;
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+            height: '100%',
+            width: '100%',
+            videoId: daftarVideo[indeksVideoSekarang].id, 
+            playerVars: {
+                'playsinline': 1, 
+                'rel': 0,        
+                'modestbranding': 1
+            },
+            events: {
+                'onStateChange': onPlayerStateChange // Menangkap perubahan status video
+            }
+        });
+    }
+
+    // Fungsi otomatis ketika status video berubah
+    function onPlayerStateChange(event) {
+        // YT.PlayerState.ENDED (nilai: 0) berarti video telah selesai diputar
+        if (event.data === YT.PlayerState.ENDED) {
+            putarVideoBerikutnya();
+        }
+    }
+
+    function putarVideoBerikutnya() {
+        // Naikkan indeks video, kembali ke 0 jika sudah mencapai akhir daftar putar
+        indeksVideoSekarang = (indeksVideoSekarang + 1) % daftarVideo.length;
+        const videoBerikutnya = daftarVideo[indeksVideoSekarang];
+        
+        if (player && typeof player.loadVideoById === 'function') {
+            player.loadVideoById(videoBerikutnya.id);
+        }
+    }
+
+    function putarVideoBerdasarkanId(idVideo) {
+        // Cari dan perbarui indeks track saat ini berdasarkan item yang diklik manual
+        const indeksDitemukan = daftarVideo.findIndex(v => v.id === idVideo);
+        if (indeksDitemukan !== -1) {
+            indeksVideoSekarang = indeksDitemukan;
+        }
+
+        if (player && typeof player.loadVideoById === 'function') {
+            player.loadVideoById(idVideo);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    // ========================================================
+    // 4. MEMBUAT TAMPILAN PLAYLIST SECARA OTOMATIS
+    // ========================================================
+    const kontainerPlaylist = document.getElementById('playlist-list');
+    daftarVideo.forEach(video => {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        item.onclick = () => putarVideoBerdasarkanId(video.id);
+        
+        const gambarMiniUrl = `https://youtube.com{video.id}/mqdefault.jpg`;
+        
+        item.innerHTML = `
+            <div class="thumbnail" style="background-image: url('${gambarMiniUrl}');"></div>
+            <div class="video-info">
+                <div class="video-name">${video.judul}</div>
+            </div>
+        `;
+        kontainerPlaylist.appendChild(item);
+    });
+</script>
+</body>
+</html>
