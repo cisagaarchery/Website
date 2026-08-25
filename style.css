@@ -23,7 +23,90 @@ overflow-x: hidden;
 }
 
 /* Navigasi / Header */
+ /* Pengaturan Desain Header */
 header {
+    background-color: #1a1a1a;
+    padding: 10px 40px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Flexbox Tata Letak Navigasi */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Memposisikan Logo dan Menu Utama */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+/* Ukuran Gambar Logo Klub */
+.logo img {
+    height: 50px;
+    width: auto;
+    display: block;
+}
+
+/* Reset Standar untuk List Menu */
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+/* Gaya Teks Menu Utama */
+.main-menu a {
+    color: #ffffff;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+/* Efek Sorot Teks Menu Utama */
+.main-menu a:hover {
+    color: #ffcc00;
+}
+
+/* Gaya Dasar Ikon Media Sosial */
+.social-links a {
+    color: #ffffff;
+    font-size: 20px;
+    transition: transform 0.3s ease, color 0.3s ease;
+    display: inline-block;
+}
+
+/* Efek Warna Hover Masing-Masing Brand */
+.social-links .fa-youtube:hover { 
+    color: #ff0000; 
+    transform: scale(1.2); 
+}
+
+.social-links .fa-instagram:hover { 
+    color: #e1306c; 
+    transform: scale(1.2); 
+}
+
+.social-links .fa-telegram:hover { 
+    color: #0088cc; 
+    transform: scale(1.2); 
+}
+
+.social-links .fa-x-twitter:hover { 
+    color: #afafaf; 
+    transform: scale(1.2); 
+}
+
+
+{
 background-color: var(--primary);
 color: white;
 padding: 1rem 2rem;
